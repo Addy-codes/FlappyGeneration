@@ -1,0 +1,17 @@
+1. Fill the given Rectangle with African American Popstar Kanye West wearing golden jewelry.
+
+2.Fill the given Rectangle with the Actor Jake Gall Gyllenhaal wearing a suit
+
+3. Face of Pop star Taylor Swift sideways/side profile
+
+Strength 0.01
+cfg 10
+
+
+prompt = f"""
+    Breakdown the given theme: '{theme}' for a Flappy Bird game, into 4 items i.e., 2 Obstacles, 1 Main Character and 1 Background. Compare the two obstacles and the one that's more likely to be on the ground should be Obstacle 1. give the output as follows:
+    1. Obstacle 1: From the two obstacles, the one which should be more likely to be closer to the ground. This will replace the bottom pipe in the original flappy bird game. This should represent something or someone the main character needs to avoid in the game environment, this object will be placed on the ground or bottom of the screen. Things that should be attached to the ground should be mentioned in this one. Keep it short.
+    2. Obstacle 2: This will replace the top pipe in the original flappy bird game. Another element in the game that poses a challenge to the main character, this object will be placed at the top of the screen or as if hanging upside down. Things that should be in the sky, flying or hanging should be mentioned in this one. Keep it short.
+    3. Main Character: A representation of the main character in a creative and thematic way, this will be replacing the bird in the original flappy bird game. Keep it short.
+    4. Background Image: A scene that sets the environment where the action takes place. Keep it short.
+    """
