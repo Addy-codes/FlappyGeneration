@@ -1,6 +1,11 @@
 from flask import Flask, render_template, request, redirect, url_for, session
 from pymongo import MongoClient
 import openai
+from PIL import Image
+import base64
+import os
+import requests
+import threading
 from config import(
     STABILITY_API_KEY,
     CLIPDROP_API_KEY,
@@ -63,8 +68,7 @@ def modify_theme():
         top_obstacle = request.form.get('top_obstacle')
         bottom_obstacle = request.form.get('bottom_obstacle')
 
-        generate_assets()
-        # Process this data or store it as needed
+        generate_assets(main_character, game_background, top_obstacle, bottom_obstacle)
         # For example, redirecting to another page with this data
         return redirect(url_for('assets'))  # Replace 'next_page' with your next page
 
@@ -112,9 +116,178 @@ def parse_processed_theme(processed_theme_str):
 
     return theme_dict
 
-def generate_assets():
-    pass
+def generate_assets(main_character, background_image, obstacle1, obstacle2):
+    out_dir = "./CustomFlappy/img"
+    if not os.path.exists(out_dir):
+        os.makedirs(out_dir)
 
+    generate_pipe(obstacle1, out_dir, "bottom")
+    generate_pipe(obstacle2, out_dir, "top")
+    generate_bird(main_character, out_dir)
+    generate_background(background_image, out_dir)
+
+def ttmgenerate_image(body, url="https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image"):
+    headers = {
+        "Accept": "application/json",
+        "Content-Type": "application/json",
+        "Authorization": f"Bearer {STABILITY_API_KEY}",
+    }
+
+    response = requests.post(url, headers=headers, json=body)
+    if response.status_code != 200:
+        raise Exception("Non-200 response: " + str(response.text))
+    return response.json()
+
+def show_image(file_path):
+    with Image.open(file_path) as img:
+        img.show()
+
+def resize_image(file_path, new_size):
+    with Image.open(file_path) as img:
+        resized_image = img.resize(new_size)
+        return resized_image
+
+def save_image(image, file_path):
+    image.save(file_path)
+
+def crop_transparency(image_path):
+    with Image.open(image_path) as img:
+        img = img.convert("RGBA")
+        pixels = img.load()
+
+        width, height = img.size
+        top, left, right = height, width, 0
+
+        for y in range(height):
+            for x in range(width):
+                if pixels[x, y][3] != 0:
+                    top = min(top, y)
+                    left = min(left, x)
+                    right = max(right, x)
+
+        bottom = height
+        return img.crop((left, top, right, bottom))
+
+def remove_background(file_path, api_key):
+    url = 'https://clipdrop-api.co/remove-background/v1'
+    with open(file_path, 'rb') as image_file:
+        files = {'image_file': (file_path, image_file, 'image/jpeg')}
+        headers = {'x-api-key': api_key}
+
+        response = requests.post(url, files=files, headers=headers)
+        if response.ok:
+            with open(file_path, 'wb') as out_file:
+                out_file.write(response.content)
+            print(f"Background removed and image saved back as '{file_path}'")
+        else:
+            print(f"Error: {response.json()['error']}")
+
+
+def generate_pipe(prompt, out_dir, position):
+    image_generation_body = {
+        "steps": 40,
+        "width": 640,
+        "height": 1536,
+        "seed": 0,
+        "cfg_scale": 10,
+        "samples": 1,
+        "style_preset": "pixel-art",
+        "text_prompts": [
+            {"text": f"{prompt}, white clean background", "weight": 1},
+            {"text": "blurry, bad", "weight": -1}
+        ],
+    }
+
+    # Generate image
+    generated_data = ttmgenerate_image(image_generation_body)
+    for i, image in enumerate(generated_data["artifacts"]):
+        image_path = f'{out_dir}/{position}pipe.png'
+        with open(image_path, "wb") as f:
+            f.write(base64.b64decode(image["base64"]))
+    
+    # Crop the image to remove transparent space
+    cropped_img = crop_transparency(image_path)
+    cropped_img.save(image_path)
+
+    # Check position and rotate if needed
+    if position == "top":
+        with Image.open(image_path) as img:
+            rotated_img = img.rotate(180)
+            rotated_img.save(image_path)
+
+    # Assuming remove_background and resize_image are defined elsewhere
+    remove_background(image_path, CLIPDROP_API_KEY)
+    resized_img = resize_image(image_path, (82, 450))
+    save_image(resized_img, image_path)
+
+def generate_bird(prompt, out_dir):
+    # Generate bird
+    image_generation_body = {
+        "steps": 40,
+        "width": 1024,
+        "height": 1024,
+        "seed": 0,
+        "cfg_scale": 10,
+        "samples": 1,
+        "style_preset": "pixel-art",
+        "text_prompts": [
+            {
+            "text": f"{prompt}, white clean background",
+            "weight": 1
+            },
+            {
+            "text": "blurry, bad",
+            "weight": -1
+            }
+        ],
+    }
+    # Generate image
+    generated_data = ttmgenerate_image(STABILITY_API_KEY, image_generation_body)
+    for i, image in enumerate(generated_data["artifacts"]):
+        bird_path = f'{out_dir}/bird.png'
+        with open(bird_path, "wb") as f:
+            f.write(base64.b64decode(image["base64"]))
+
+    remove_background(bird_path, CLIPDROP_API_KEY)
+    resized_img = resize_image(bird_path, (40, 62))
+    save_image(resized_img, bird_path)
+
+def generate_background(prompt, out_dir):
+    # Generate Background
+    image_generation_body = {
+        "steps": 40,
+        "width": 1024,
+        "height": 1024,
+        "seed": 0,
+        "cfg_scale": 10,
+        "samples": 1,
+        "style_preset": "pixel-art",
+        "text_prompts": [
+            {
+            "text": prompt,
+            "weight": 1
+            },
+            {
+            "text": "blurry, bad",
+            "weight": -1
+            }
+        ],
+    }
+
+    # Generate image
+    generated_data = ttmgenerate_image(STABILITY_API_KEY, image_generation_body)
+    for i, image in enumerate(generated_data["artifacts"]):
+        bg_path = f'{out_dir}/BG.png'
+        with open(bg_path, "wb") as f:
+            f.write(base64.b64decode(image["base64"]))
+
+    resized_img = resize_image(bg_path, (1000,1000))
+    save_image(resized_img, bg_path)
+    width, height = resized_img.size
+    crop_area = (0, height - 112, 700, height)  # left, upper, right, lower
+    cropped_img = resized_img.crop(crop_area)
+    ground_image_path = f'{out_dir}/ground.png'
+    cropped_img.save(ground_image_path)
 
 if __name__ == '__main__':
     app.run(debug=True)
