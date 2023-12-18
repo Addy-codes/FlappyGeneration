@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            background-color: white;
+            font-family: Arial, sans-serif;
+            color: black;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        .asset {
+            width: 100%;
+
+            display: flex;
+            justify-content: space-around;
+        }
+
+        .allasset {
+            width: 50%;
+            margin: 5vh 23vh;
+
+        }
+
+        .generateBtn {
+            width: 50%;
+            margin: 5vh 23vh;
+            /* border: 2px solid red; */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .generateBtn button {
+            width: 40%;
+            height: 10vh;
+            font-size: 17px;
+            background-color: #d79f00;
+            border-radius: 5px;
+            color: white;
+            font-weight: 700;
+        }
+
+        .element-container {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 2vh;
+            border: 2px solid yellow;
+            width: 80%;
+
+        }
+
+        .heading-container {
+            margin-bottom: 1vh;
+        }
+
+        .image-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 2vh;
+            width: 50vh;
+            /* Square shape with fixed height */
+            height: 50vh;
+            margin-bottom: 1vh;
+            background-color: wheat;
+        }
+
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 14vh;
+            margin-top: -19vh;
+        }
+
+        .regenerate-button {
+            height: 7vh;
+            padding: 1vh;
+            color: #fff;
+            border: none;
+            border-radius: 1vh;
+            cursor: pointer;
+           
+            width: 30%;
+            font-size: 17px;
+            background-color: #21AB7A;
+            font-weight: 700;
+        }
+        .regenerate-button:hover {
+          
+        }
+    </style>
+</head>
+
+<body>
+    <div class="asset">
+        <div class="allasset">
+            <div class="element-container">
+                <div class="heading-container">
+                    <h2>Main Character:</h2>
+                </div>
+                <div class="image-container">
+                    <!-- Your main character image goes here -->
+                    <img src="main-character.jpg" alt="Main Character">
+                </div>
+                <div class="button-container">
+                    <button class="regenerate-button">Retry</button>
+                </div>
+            </div>
+
+            <div class="element-container">
+                <div class="heading-container">
+                    <h2>Top Obstacle:</h2>
+                </div>
+                <div class="image-container">
+                    <!-- Your top obstacle image goes here -->
+                    <img src="top-obstacle.jpg" alt="Top Obstacle">
+                </div>
+                <div class="button-container">
+                    <button class="regenerate-button">Retry</button>
+                </div>
+            </div>
+
+            <div class="element-container">
+                <div class="heading-container">
+                    <h2>Bottom Obstacle:</h2>
+                </div>
+                <div class="image-container">
+                    <!-- Your bottom obstacle image goes here -->
+                    <img src="bottom-obstacle.jpg" alt="Bottom Obstacle">
+                </div>
+                <div class="button-container">
+                    <button class="regenerate-button">Retry</button>
+                </div>
+            </div>
+
+            <div class="element-container">
+                <div class="heading-container">
+                    <h2>Background:</h2>
+                </div>
+                <div class="image-container">
+                    <!-- Your background image goes here -->
+                    <img src="background.jpg" alt="Background">
+                </div>
+                <div class="button-container">
+                    <button class="regenerate-button">Retry</button>
+                </div>
+            </div>
+        </div>
+        <div class="generateBtn">
+            <button type="submit">Generate Game</button>
+        </div>
+
+
+    </div>
+</body>
+
+</html>
