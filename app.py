@@ -53,7 +53,7 @@ def assets():
     return render_template('assets.html')
 
 def process_theme(theme):
-    openai.api_key = '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'
+    openai.api_key = OPENAI_API_KEY
 
     prompt = f"""
     Breakdown the given theme: '{theme}' for a Flappy Bird game, into 4 items ie 2 Obstacles (something or someone the main character needs to avoid in the game environment), 1 Main Character and 1 Background. Compare the two obstacles and the one that's more likely to be on the ground should be Obstacle 1. give the output as follows:
