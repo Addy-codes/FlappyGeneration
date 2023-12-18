@@ -3,6 +3,7 @@ from pymongo import MongoClient
 import openai
 from PIL import Image
 import base64
+import zipfile
 import os
 import requests
 import threading
@@ -17,6 +18,10 @@ from config import(
 app = Flask(__name__)
 
 app.secret_key = SECRET_KEY
+
+SITE_ID = None  # Leave as None if creating a new site
+# API Endpoints
+DEPLOY_URL = f'https://api.netlify.com/api/v1/sites/{SITE_ID}/deploys' if SITE_ID else 'https://api.netlify.com/api/v1/sites'
 
 
 # MongoDB connection
@@ -86,15 +91,38 @@ def modify_theme():
 
 @app.route('/assets', methods=['GET', 'POST'])
 def assets():
-    # Your assets page logic
+    if request.method == 'POST':
+        folder_path = './CustomFlappy'
+        zip_path = 'website.zip'
+
+        # Zip the website folder
+        zip_folder(folder_path, zip_path)
+
+        # Deploy the site
+        deploy_response = deploy_site(zip_path)
+        if 'id' in deploy_response:
+            deploy_id = deploy_response['id']
+            url = deploy_response['url']
+            print(url)
+            print(f"Deploy initiated. Deploy ID: {deploy_id}")
+
+        else:
+            print("Error in deployment:", deploy_response)
+            return "Error in deployment"
+        return redirect(url_for('final'))
+    
     return render_template('assets.html')
+
+@app.route('/final', methods=['GET', 'POST'])
+def final():
+    return render_template ("final.html")
 
 @app.route('/regenerate/main_character', methods=['POST'])
 def regenerate_main_character():
     # Regeneration logic for main character
     out_dir = "./CustomFlappy/img"
     main_character = session.get('main_character', '')
-    generate_pipe(main_character, out_dir, "bottom")
+    generate_bird(main_character, out_dir)
     return redirect(url_for('assets'))
 
 @app.route('/regenerate/top_obstacle', methods=['POST'])
@@ -248,6 +276,10 @@ def generate_pipe(prompt, out_dir, position):
     # Crop the image to remove transparent space
     cropped_img = crop_transparency(image_path)
     cropped_img.save(image_path)
+    if position == "top":
+        cropped_img.save("./static/toppipe.png")
+    else:
+        cropped_img.save("./static/botpipe.png")
 
     # Check position and rotate if needed
     if position == "top":
@@ -264,12 +296,12 @@ def generate_pipe(prompt, out_dir, position):
         remove_background(image_path, CLIPDROP_API_KEY)
         resized_img = resize_image(image_path, (82, 450))
         save_image(resized_img, f'{out_dir}/toppipe.png')
-        save_image(resized_img, './static/toppipe.png')
+        # save_image(resized_img, './static/toppipe.png')
     else:
         remove_background(image_path, CLIPDROP_API_KEY)
         resized_img = resize_image(image_path, (82, 450))
         save_image(resized_img, f'{out_dir}/botpipe.png')
-        save_image(resized_img, './static/botpipe.png')
+        # save_image(resized_img, './static/botpipe.png')
 
 def generate_bird(prompt, out_dir):
     # Generate bird
@@ -295,14 +327,27 @@ def generate_bird(prompt, out_dir):
     # Generate image
     generated_data = ttmgenerate_image(image_generation_body)
     for i, image in enumerate(generated_data["artifacts"]):
+        # Original path
         bird_path = f'{out_dir}/bird/v2.png'
+        
+        # Path in the static directory
+        static_bird_path = 'static/v2.png'
+
+        # Decode the base64 image
+        decoded_image = base64.b64decode(image["base64"])
+
+        # Write to the original path
         with open(bird_path, "wb") as f:
-            f.write(base64.b64decode(image["base64"]))
+            f.write(decoded_image)
+
+        # Write to the static path
+        with open(static_bird_path, "wb") as f:
+            f.write(decoded_image)
 
     remove_background(bird_path, CLIPDROP_API_KEY)
     resized_img = resize_image(bird_path, (40, 62))
     save_image(resized_img, bird_path)
-    save_image(resized_img,"./static/v2.png")
+    # save_image(resized_img,"./static/v2.png")
 
 def generate_background(prompt, out_dir):
     # Generate Background
@@ -342,6 +387,23 @@ def generate_background(prompt, out_dir):
     ground_image_path = f'{out_dir}/ground.png'
     cropped_img.save(ground_image_path)
     cropped_img.save("./static/ground.png")
+
+# Create a ZIP file of the website folder
+def zip_folder(folder_path, zip_path):
+    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for root, dirs, files in os.walk(folder_path):
+            for file in files:
+                zipf.write(os.path.join(root, file), os.path.relpath(os.path.join(root, file), os.path.join(folder_path, '..')))
+
+# Deploy the site using the ZIP file
+def deploy_site(zip_path):
+    headers = {
+        'Content-Type': 'application/zip',
+        'Authorization': f'Bearer {NETLIFY_ACCESS_TOKEN}'
+    }
+    with open(zip_path, 'rb') as zipf:
+        response = requests.post(DEPLOY_URL, headers=headers, data=zipf)
+    return response.json()
 
 if __name__ == '__main__':
     app.run(debug=True)
