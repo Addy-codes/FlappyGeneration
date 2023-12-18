@@ -104,6 +104,7 @@ def assets():
             deploy_id = deploy_response['id']
             url = deploy_response['url']
             print(url)
+            session['url'] = url
             print(f"Deploy initiated. Deploy ID: {deploy_id}")
 
         else:
@@ -115,7 +116,8 @@ def assets():
 
 @app.route('/final', methods=['GET', 'POST'])
 def final():
-    return render_template ("final.html")
+    url = session.get('url')
+    return render_template ("final.html", url = url)
 
 @app.route('/regenerate/main_character', methods=['POST'])
 def regenerate_main_character():
