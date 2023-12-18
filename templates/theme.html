@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        body {
+            background-color: white;
+            font-family: Arial, sans-serif;
+            color: black;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+        }
+
+        #container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            /* justify-content: center; */
+            flex-direction: column;
+            align-items: center;
+            padding: 10px;
+            /* border: 2px solid blue; */
+        }
+
+        #container p {
+            font-size: 17px;
+            font-weight: 700;
+        }
+
+
+        .para {
+            width: 80%;
+            display: flex;
+            /* justify-content: center; */
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            /* border:2px solid red; */
+
+        }
+
+        h1 {
+            height: 10vh;
+        }
+
+
+
+        .characterContainer {
+            display: flex;
+            justify-content: space-around;
+            /* border: 2px solid red; */
+            width: 100%;
+            height: 53vh;
+            gap: 5vh;
+
+        }
+
+        .fill {
+            margin: 10vh;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+            border-radius: 5px;
+            width: 54%;
+            height: 23vh;
+        }
+
+
+        /* .idea {
+            width: 40%;
+            max-width: 600px;
+            margin: 10vh auto;
+            padding: 20px;
+            border-radius: 6vh;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.2);
+            box-sizing: border-box;
+            line-height: 1.6;
+            background-color: #CDD8DE;
+            height: 40vh;
+        
+        } */
+
+
+
+
+
+
+        textarea {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 5px;
+            box-sizing: border-box;
+            border: 2px solid hsla(0, 0%, 13%, 1);
+            border-radius: 4px;
+            resize: vertical;
+            font-size: 20px;
+        }
+
+        label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+
+        .fill button {
+            width: 30%;
+            font-size: 20px;
+            padding: 10px;
+            background-color: #d79f00;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 37%;
+            margin-top: 5%;
+            font-weight: 700;
+        }
+
+
+        .fill button:hover {
+            background-color: #f3b814;
+        }
+
+        /* .idea ul li {
+            list-style: none;
+            color: black;
+            font-size: 4vh;
+            line-height: 9vh;
+        }
+        .idea button {
+            width: 45%;
+            padding: 10px;
+            background-color: #26A683;
+            color: #fff;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 25vh;
+            margin-top: 5vh;
+            height: 8vh;
+        } */
+
+        @media screen and (max-width: 650px) {
+            .fill {
+                width: 80%;
+                height: 55%;
+            }
+
+            textarea {
+                font-size: 15px;
+            }
+
+            .fill button {
+                font-size: 17px;
+                width: 60%;
+                margin-left: 20%;
+            }
+
+            h1 {
+                font-size: 27px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div id="container">
+        <h1>Create Your Own Game!!</h1>
+        <div class="para">
+            <p>Welcome to your very own Flappy Bird Maker.</p>
+            <p>"Flappy Bird" is a smartphone game in which the player guides a bird through a succession of pipes in an
+                open area without touching them.</p>
+            <p>Take note of how concisely it is defined. We'd like you to create your own game. Simply input a similar
+                subject to see who is avoiding what in what surroundings.</p>
+        </div>
+
+        <div class="characterContainer">
+            <div class="fill">
+                <!-- Begin Form -->
+                <form method="POST" action="/theme">
+                    <label for="theme">Your Idea:</label>
+                    <textarea id="theme" name="theme"
+                        rows="4">A Bird is dodging trash and plastics in polluted city.</textarea>
+
+                    <button type="submit" name="generate">Generate Idea</button>
+                </form>
+                <!-- End Form -->
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
