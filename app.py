@@ -18,6 +18,7 @@ app = Flask(__name__)
 
 app.secret_key = SECRET_KEY
 
+
 # MongoDB connection
 client = MongoClient("mongodb_uri")  # replace with your MongoDB URI
 db = client.your_database_name  # replace with your database name
@@ -68,6 +69,12 @@ def modify_theme():
         top_obstacle = request.form.get('top_obstacle')
         bottom_obstacle = request.form.get('bottom_obstacle')
 
+        # Store parameters in the session
+        session['main_character'] = main_character
+        session['game_background'] = game_background
+        session['top_obstacle'] = top_obstacle
+        session['bottom_obstacle'] = bottom_obstacle
+
         generate_assets(main_character, game_background, top_obstacle, bottom_obstacle)
         # For example, redirecting to another page with this data
         return redirect(url_for('assets'))  # Replace 'next_page' with your next page
@@ -77,10 +84,40 @@ def modify_theme():
     return render_template('modifytheme.html', processed_theme=processed_theme)
 
 
-@app.route('/assets')
+@app.route('/assets', methods=['GET', 'POST'])
 def assets():
     # Your assets page logic
     return render_template('assets.html')
+
+@app.route('/regenerate/main_character', methods=['POST'])
+def regenerate_main_character():
+    # Regeneration logic for main character
+    out_dir = "./CustomFlappy/img"
+    main_character = session.get('main_character', '')
+    generate_pipe(main_character, out_dir, "bottom")
+    return redirect(url_for('assets'))
+
+@app.route('/regenerate/top_obstacle', methods=['POST'])
+def regenerate_top_obstacle():
+    out_dir = "./CustomFlappy/img"
+    top_obstacle = session.get('top_obstacle', '')
+    generate_pipe(top_obstacle, out_dir, "top")
+    return redirect(url_for('assets'))
+
+@app.route('/regenerate/bottom_obstacle', methods=['POST'])
+def regenerate_bottom_obstacle():
+    out_dir = "./CustomFlappy/img"
+    bottom_obstacle = session.get('bottom_obstacle', '')
+    generate_pipe(bottom_obstacle, out_dir, "bottom")
+    return redirect(url_for('assets'))
+
+@app.route('/regenerate/background', methods=['POST'])
+def regenerate_background():
+    out_dir = "./CustomFlappy/img"
+    background_image = session.get('game_background', '')
+    generate_background(background_image, out_dir)
+    return redirect(url_for('assets'))
+
 
 def process_theme(theme):
     openai.api_key = OPENAI_API_KEY
@@ -120,10 +157,13 @@ def generate_assets(main_character, background_image, obstacle1, obstacle2):
     out_dir = "./CustomFlappy/img"
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
-
+    print("Generating Obs 1")
     generate_pipe(obstacle1, out_dir, "bottom")
+    print("Generating Obs 2")
     generate_pipe(obstacle2, out_dir, "top")
+    print("Generating main character")
     generate_bird(main_character, out_dir)
+    print("Generating BG")
     generate_background(background_image, out_dir)
 
 def ttmgenerate_image(body, url="https://api.stability.ai/v1/generation/stable-diffusion-xl-1024-v1-0/text-to-image"):
@@ -220,6 +260,17 @@ def generate_pipe(prompt, out_dir, position):
     resized_img = resize_image(image_path, (82, 450))
     save_image(resized_img, image_path)
 
+    if position == "top":
+        remove_background(image_path, CLIPDROP_API_KEY)
+        resized_img = resize_image(image_path, (82, 450))
+        save_image(resized_img, f'{out_dir}/toppipe.png')
+        save_image(resized_img, './static/toppipe.png')
+    else:
+        remove_background(image_path, CLIPDROP_API_KEY)
+        resized_img = resize_image(image_path, (82, 450))
+        save_image(resized_img, f'{out_dir}/botpipe.png')
+        save_image(resized_img, './static/botpipe.png')
+
 def generate_bird(prompt, out_dir):
     # Generate bird
     image_generation_body = {
@@ -242,15 +293,16 @@ def generate_bird(prompt, out_dir):
         ],
     }
     # Generate image
-    generated_data = ttmgenerate_image(STABILITY_API_KEY, image_generation_body)
+    generated_data = ttmgenerate_image(image_generation_body)
     for i, image in enumerate(generated_data["artifacts"]):
-        bird_path = f'{out_dir}/bird.png'
+        bird_path = f'{out_dir}/bird/v2.png'
         with open(bird_path, "wb") as f:
             f.write(base64.b64decode(image["base64"]))
 
     remove_background(bird_path, CLIPDROP_API_KEY)
     resized_img = resize_image(bird_path, (40, 62))
     save_image(resized_img, bird_path)
+    save_image(resized_img,"./static/v2.png")
 
 def generate_background(prompt, out_dir):
     # Generate Background
@@ -275,7 +327,7 @@ def generate_background(prompt, out_dir):
     }
 
     # Generate image
-    generated_data = ttmgenerate_image(STABILITY_API_KEY, image_generation_body)
+    generated_data = ttmgenerate_image(image_generation_body)
     for i, image in enumerate(generated_data["artifacts"]):
         bg_path = f'{out_dir}/BG.png'
         with open(bg_path, "wb") as f:
@@ -283,11 +335,13 @@ def generate_background(prompt, out_dir):
 
     resized_img = resize_image(bg_path, (1000,1000))
     save_image(resized_img, bg_path)
+    save_image(resized_img,"./static/BG.png")
     width, height = resized_img.size
     crop_area = (0, height - 112, 700, height)  # left, upper, right, lower
     cropped_img = resized_img.crop(crop_area)
     ground_image_path = f'{out_dir}/ground.png'
     cropped_img.save(ground_image_path)
+    cropped_img.save("./static/ground.png")
 
 if __name__ == '__main__':
     app.run(debug=True)

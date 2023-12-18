@@ -159,63 +159,80 @@
 <body>
     <div class="asset">
         <div class="allasset">
+            <!-- Main Character Regeneration Form -->
             <div class="element-container">
                 <div class="heading-container">
                     <h2>Main Character:</h2>
                 </div>
                 <div class="image-container">
-                    <!-- Main character image -->
-                    <img src="../CustomFlappy/img/bird/v2.png" alt="Main Character">
+                    <img src="{{ url_for('static', filename='v2.png') }}" alt="Main Character">
                 </div>
-                <div class="button-container">
-                    <button class="regenerate-button">Retry</button>
-                </div>
+                <form action="/regenerate/main_character" method="post">
+                    <div class="button-container">
+                        <button type="submit" name="regenerate" id="regenerate-main-character"
+                            value="main_character">Retry</button>
+                    </div>
+                </form>
             </div>
 
+            <!-- Top Obstacle Regeneration Form -->
             <div class="element-container">
                 <div class="heading-container">
                     <h2>Top Obstacle:</h2>
                 </div>
                 <div class="image-container">
-                    <!-- Top obstacle image -->
-                    <img src="../CustomFlappy/img/toppipe.png" alt="Top Obstacle">
+                    <img src="{{ url_for('static', filename='toppipe.png') }}" alt="Top Obstacle">
                 </div>
-                <div class="button-container">
-                    <button class="regenerate-button">Retry</button>
-                </div>
+                <form action="/regenerate/top_obstacle" method="post">
+                    <div class="button-container">
+                        <button type="submit" name="regenerate" id="regenerate-top-obstacle"
+                            value="top_obstacle">Retry</button>
+                    </div>
+                </form>
             </div>
 
+            <!-- Bottom Obstacle Regeneration Form -->
             <div class="element-container">
                 <div class="heading-container">
                     <h2>Bottom Obstacle:</h2>
                 </div>
                 <div class="image-container">
-                    <!-- Bottom obstacle image -->
-                    <img src="../CustomFlappy/img/botpipe.png" alt="Bottom Obstacle">
+                    <img src="{{ url_for('static', filename='botpipe.png') }}" alt="Bottom Obstacle">
                 </div>
-                <div class="button-container">
-                    <button class="regenerate-button">Retry</button>
-                </div>
+                <form action="/regenerate/bottom_obstacle" method="post">
+                    <div class="button-container">
+                        <button type="submit" name="regenerate" id="regenerate-bottom-obstacle"
+                            value="bottom_obstacle">Retry</button>
+                    </div>
+                </form>
             </div>
 
+            <!-- Background Regeneration Form -->
             <div class="element-container">
                 <div class="heading-container">
                     <h2>Background:</h2>
                 </div>
                 <div class="image-container">
-                    <!-- Background image -->
-                    <img src="../CustomFlappy/img/BG.png" alt="Background">
+                    <img src="{{ url_for('static', filename='BG.png') }}" alt="Background">
                 </div>
-                <div class="button-container">
-                    <button class="regenerate-button">Retry</button>
-                </div>
+                <form action="/regenerate/background" method="post">
+                    <div class="button-container">
+                        <button type="submit" name="regenerate" id="regenerate-background"
+                            value="background">Retry</button>
+                    </div>
+                </form>
             </div>
         </div>
+
+        <!-- Game Generation Form -->
         <div class="generateBtn">
-            <button type="submit">Generate Game</button>
+            <form action="/generate_game" method="post">
+                <button type="submit" id="generate-game">Generate Game</button>
+            </form>
         </div>
     </div>
 </body>
+
 
 
 </html>

@@ -84,7 +84,7 @@
     <div id="bigContainer">
         <div id="formContainer">
             <h2>Here is your Game Images:</h2>
-            <form method="POST">
+            <form method="POST" action="/modifytheme">
                 <label for="main_character">Main Character:</label>
                 <input type="text" id="main_character" name="main_character"
                     value="{{ processed_theme.main_character }}">
@@ -100,7 +100,7 @@
                 <input type="text" id="bottom_obstacle" name="bottom_obstacle"
                     value="{{ processed_theme.bottom_obstacle }}">
 
-                <input type="submit" value="Continue">
+                <button type="submit" name="generate">Continue</button>
             </form>
         </div>
     </div>
