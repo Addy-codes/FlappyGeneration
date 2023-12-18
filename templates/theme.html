@@ -5,11 +5,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Document</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500&display=swap" rel="stylesheet">
     <style>
         body {
             background-color: white;
-            font-family: Arial, sans-serif;
-            color: black;
+            font-family: 'Montserrat', sans-serif;
+            color: white;
             margin: 0;
             padding: 0;
             width: 100%;
@@ -18,18 +21,34 @@
 
         #container {
             width: 100%;
-            height: 100%;
+            height: 100vh;
             display: flex;
             /* justify-content: center; */
             flex-direction: column;
             align-items: center;
             padding: 10px;
             /* border: 2px solid blue; */
+
+            /* filter: blur(4px); */
+        }
+
+        #container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 120vh;
+            background: url('/static/img/bg2.png') center/cover no-repeat;
+            z-index: -1;
+            filter: blur(4px);
+            /* opacity: 0.8; */
         }
 
         #container p {
-            font-size: 17px;
+            font-size: 20px;
             font-weight: 700;
+            width: 70%;
         }
 
 
@@ -46,6 +65,8 @@
 
         h1 {
             height: 10vh;
+    font-size: 50px;
+    font-weight: 900;
         }
 
 
@@ -105,6 +126,7 @@
             display: block;
             font-weight: bold;
             margin-bottom: 10px;
+            color: black
         }
 
 
@@ -112,7 +134,8 @@
             width: 30%;
             font-size: 20px;
             padding: 10px;
-            background-color: #d79f00;
+            background-color: #2014AC;
+            
             color: #fff;
             border: none;
             border-radius: 4px;
@@ -124,7 +147,8 @@
 
 
         .fill button:hover {
-            background-color: #f3b814;
+            
+            background-color: #4233ef;
         }
 
         /* .idea ul li {
@@ -173,11 +197,10 @@
     <div id="container">
         <h1>Create Your Own Game!!</h1>
         <div class="para">
-            <p>Welcome to your very own Flappy Bird Maker.</p>
-            <p>"Flappy Bird" is a smartphone game in which the player guides a bird through a succession of pipes in an
-                open area without touching them.</p>
-            <p>Take note of how concisely it is defined. We'd like you to create your own game. Simply input a similar
-                subject to see who is avoiding what in what surroundings.</p>
+            <p>Be a game creator in 30 Minutes. Use world's first Text to Game AI !</p>
+            <p>Create a game with one main character dodging two obstacles in a unique setting. Example: A Pizza dodges
+                pineapple and ketchup in a hotel. Get quirky and craft your game!</p>
+
         </div>
 
         <div class="characterContainer">
