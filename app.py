@@ -201,7 +201,7 @@ def generate_pipe(prompt, out_dir, position):
     # Generate image
     generated_data = ttmgenerate_image(image_generation_body)
     for i, image in enumerate(generated_data["artifacts"]):
-        image_path = f'{out_dir}/{position}pipe.png'
+        image_path = f'{out_dir}/toppipe.png'
         with open(image_path, "wb") as f:
             f.write(base64.b64decode(image["base64"]))
     
