@@ -21,11 +21,13 @@
 
             display: flex;
             justify-content: space-around;
+            /* gap: 10vh; */
         }
 
         .allasset {
             width: 50%;
             margin: 5vh 23vh;
+            /* border: 2px solid blue; */
 
         }
 
@@ -48,12 +50,19 @@
             font-weight: 700;
         }
 
+        .generateBtn button:hover {
+
+            background-color: #f7bb16;
+
+        }
+
         .element-container {
             display: flex;
             flex-direction: column;
             margin-bottom: 2vh;
-            border: 2px solid yellow;
-            width: 80%;
+            /* border: 2px solid yellow; */
+            width: 123%;
+            padding: 10px;
 
         }
 
@@ -65,7 +74,7 @@
             position: relative;
             overflow: hidden;
             border-radius: 2vh;
-            width: 50vh;
+            width: 65%;
             /* Square shape with fixed height */
             height: 50vh;
             margin-bottom: 1vh;
@@ -81,8 +90,8 @@
         .button-container {
             display: flex;
             justify-content: flex-end;
-            margin-bottom: 14vh;
-            margin-top: -19vh;
+            margin-bottom: 29vh;
+            margin-top: -28vh;
         }
 
         .regenerate-button {
@@ -92,14 +101,57 @@
             border: none;
             border-radius: 1vh;
             cursor: pointer;
-           
+
             width: 30%;
             font-size: 17px;
             background-color: #21AB7A;
             font-weight: 700;
         }
+
         .regenerate-button:hover {
-          
+            background-color: #22e4a0;
+        }
+
+        @media screen and (max-width: 1100px) {
+            .asset {
+                flex-direction: column;
+            }
+
+            .allasset {
+                margin-left: 17%;
+            }
+
+            .image-container {
+                width: 100%;
+                height: 30vh;
+            }
+
+            .button-container {
+                margin-top: 1vh;
+                margin-bottom: 1vh;
+                /* margin-right: 15vh; */
+                /* width: 86%; */
+                justify-content: center;
+            }
+
+            h2 {
+                display: flex;
+                justify-content: center;
+                font-size: 22px;
+            }
+
+            .generateBtn {
+                width: 70%;
+                margin-left: 15%;
+                margin-top: -5%;
+            }
+
+            .generateBtn button {
+                width: 50%;
+                height: 6vh;
+                font-size: 14px;
+            }
+
         }
     </style>
 </head>
