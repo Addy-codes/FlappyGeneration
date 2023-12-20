@@ -160,13 +160,30 @@ def process_theme(theme):
     4. Background Image: A scene that sets the environment where the action takes place.
     """
 
-    response = openai.Completion.create(
-        engine="text-davinci-003",
-        prompt=prompt,
-        max_tokens=150
-    )
+    max_attempts = 3
+    attempt_count = 0
+    last_response = ""
 
-    return response.choices[0].text.strip()
+    while attempt_count < max_attempts:
+        response = openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=prompt,
+            max_tokens=150
+        )
+        processed_response = response.choices[0].text.strip()
+        last_response = processed_response
+
+        # Check if the response contains all four required items
+        if ("Obstacle 1:" in processed_response and
+            "Obstacle 2:" in processed_response and
+            "Main Character:" in processed_response and
+            "Background Image:" in processed_response):
+            return processed_response
+
+        attempt_count += 1
+
+    # If no satisfactory response after max_attempts, return the last response
+    return last_response
 
 def parse_processed_theme(processed_theme_str):
     theme_dict = {}
