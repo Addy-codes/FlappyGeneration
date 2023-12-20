@@ -2,3 +2,14 @@ test.py
 testdep.py
 keys
 .vscode
+website.zip
+CustomFlappy
+static
+CustomFlappy/img/BG.png
+CustomFlappy/img/botpipe.png
+CustomFlappy/img/ground.png
+CustomFlappy/img/toppipe.png
+static/BG.png
+static/ground.png
+static/toppipe.png
+static/v2.png
