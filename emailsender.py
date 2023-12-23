@@ -1,6 +1,7 @@
 from flask import Flask, render_template, session
 import boto3
 from botocore.exceptions import ClientError
+from config import client
 
 # AWS SES configuration
 AWS_REGION = "eu-north-1"  # e.g., 'us-west-2'
@@ -26,12 +27,7 @@ def send_email(recipient, game_url):
     charset = "UTF-8"
 
     # Create a new SES resource and specify a region.
-    client = boto3.client(
-        'ses',
-        region_name="eu-north-1",
-        aws_access_key_id="AKIARIJ3VRAIE6TY4LAI",
-        aws_secret_access_key="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"
-    )
+    
 
     # Try to send the email.
     try:
