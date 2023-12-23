@@ -6,28 +6,36 @@ import base64
 import zipfile
 import os
 import requests
+import gradio_client
+import shutil
 import threading
+import boto3
+from botocore.exceptions import ClientError
 from config import(
     STABILITY_API_KEY,
     CLIPDROP_API_KEY,
     OPENAI_API_KEY,
     NETLIFY_ACCESS_TOKEN,
     SECRET_KEY,
+    DB_BASE_URL
 )
 
 app = Flask(__name__)
 
 app.secret_key = SECRET_KEY
 
+# Initialize the Gradio client
+client = gradio_client.Client("https://eccv2022-dis-background-removal.hf.space/--replicas/l8swv/")
+
 SITE_ID = None  # Leave as None if creating a new site
 # API Endpoints
 DEPLOY_URL = f'https://api.netlify.com/api/v1/sites/{SITE_ID}/deploys' if SITE_ID else 'https://api.netlify.com/api/v1/sites'
 
+# AWS SES configuration
+AWS_REGION = "eu-north-1"  # e.g., 'us-west-2'
+SENDER_EMAIL = "ankurg@gmail.com"  # This should be a verified email in AWS SES
 
-# MongoDB connection
-client = MongoClient("mongodb_uri")  # replace with your MongoDB URI
-db = client.your_database_name  # replace with your database name
-users_collection = db.users  # replace with your collection name
+
 
 @app.route('/')
 def index():
@@ -41,38 +49,78 @@ def login():
         phone = request.form.get('phone')
         
         # Save to MongoDB
-        # users_collection.insert_one({'name': name, 'email': email, 'phone': phone})
+        microservice_url = f"{DB_BASE_URL}/adduser"
+        data = {'name': name, 'email': email, 'phone': phone}
+        headers= {'Content-Type': 'application/json'}
+        userId=None
+        try:
+            response = requests.post(microservice_url, json=data , headers = headers)
+            if response.status_code == 200:
+                print('Successfully Added In Db')
+                userId = response.json().get('userId')
+            else:
+                print('Error While Adding In Db')
+        except Exception as e:
+            # Handle exceptions such as network errors
+            print(f"Error: {e}")
+        
+
+        print(userId)
 
         # Save user info in session
-        session['user_info'] = {'name': name, 'email': email, 'phone': phone}
+        session['user_info'] = {'name': name, 'email': email, 'phone': phone ,'userId': userId}
         
         return redirect(url_for('theme'))
 
     return render_template('login.html')
 
-@app.route('/theme', methods=['GET', 'POST'])
+@app.route('/theme', methods=['GET', 'POST'])       #hittt
 def theme():
     if request.method == 'POST':
         if 'generate' in request.form:
             theme = request.form.get('theme')
+            
+            # Save to MongoDB
+            microservice_url = f"{DB_BASE_URL}/addtheme"
+            user=session.get('user_info')
+            print(user['userId'])
+            data = {'theme': theme, 'user': user['userId']}
+            headers= {'Content-Type': 'application/json'}
+            outputId=None
+            try:
+                response = requests.post(microservice_url, json=data , headers=headers)
+                if response.status_code == 200:
+                    print('Successfully Added In Db')
+                    outputId=response.json().get('outputId')
+                    print(outputId)
+                else:
+                    print('Error While Adding In Db')
+                    print(response)
+            except Exception as e:
+                # Handle exceptions such as network errors
+                print(f"Error: {e}")
+
             # Process the theme here
             processed_theme = process_theme(theme)  # Implement this function
 
             # Parse and save processed theme in session
             parsed_theme = parse_processed_theme(processed_theme)
             session['processed_theme'] = parsed_theme
+            session['outputId']=outputId
 
             return render_template('modifytheme.html', processed_theme=parsed_theme)
 
     return render_template('theme.html')
 
-@app.route('/modifytheme', methods=['GET', 'POST'])
+@app.route('/modifytheme', methods=['GET', 'POST'])   
 def modify_theme():
     if request.method == 'POST':
         main_character = request.form.get('main_character')
         game_background = request.form.get('game_background')
         top_obstacle = request.form.get('top_obstacle')
         bottom_obstacle = request.form.get('bottom_obstacle')
+
+
 
         # Store parameters in the session
         session['main_character'] = main_character
@@ -104,6 +152,20 @@ def assets():
             deploy_id = deploy_response['id']
             url = deploy_response['url']
             print(url)
+            # Save to MongoDB
+            microservice_url = f"{DB_BASE_URL}/addurl"
+            outputId=session.get('outputId')
+            data = {'url': url, 'output': outputId}
+            headers= {'Content-Type': 'application/json'}
+            try:
+                response = requests.put(microservice_url, json=data , headers=headers)
+                if response.status_code == 200:
+                    print('Successfully Added In Db')
+                else:
+                    print('Error While Adding In Db')
+            except Exception as e:
+                # Handle exceptions such as network errors
+                print(f"Error: {e}")
             session['url'] = url
             print(f"Deploy initiated. Deploy ID: {deploy_id}")
 
@@ -114,9 +176,15 @@ def assets():
     
     return render_template('assets.html')
 
-@app.route('/final', methods=['GET', 'POST'])
+@app.route('/final', methods=['GET', 'POST']) 
 def final():
     url = session.get('url')
+    # user_info = session.get('user_info')
+
+    # if user_info and 'email' in user_info:
+    #     send_email(user_info['email'], url)
+    # else:
+    #     print("Email was not found in the session")
     return render_template ("final.html", url = url)
 
 @app.route('/regenerate/main_character', methods=['POST'])
@@ -131,14 +199,14 @@ def regenerate_main_character():
 def regenerate_top_obstacle():
     out_dir = "./CustomFlappy/img"
     top_obstacle = session.get('top_obstacle', '')
-    generate_pipe(top_obstacle, out_dir, "top")
+    generate_top_pipe(top_obstacle, out_dir)
     return redirect(url_for('assets'))
 
 @app.route('/regenerate/bottom_obstacle', methods=['POST'])
 def regenerate_bottom_obstacle():
     out_dir = "./CustomFlappy/img"
     bottom_obstacle = session.get('bottom_obstacle', '')
-    generate_pipe(bottom_obstacle, out_dir, "bottom")
+    generate_bot_pipe(bottom_obstacle, out_dir)
     return redirect(url_for('assets'))
 
 @app.route('/regenerate/background', methods=['POST'])
@@ -205,9 +273,9 @@ def generate_assets(main_character, background_image, obstacle1, obstacle2):
     if not os.path.exists(out_dir):
         os.makedirs(out_dir)
     print("Generating Obs 1")
-    generate_pipe(obstacle1, out_dir, "bottom")
+    generate_bot_pipe(obstacle1, out_dir)
     print("Generating Obs 2")
-    generate_pipe(obstacle2, out_dir, "top")
+    generate_top_pipe(obstacle2, out_dir)
     print("Generating main character")
     generate_bird(main_character, out_dir)
     print("Generating BG")
@@ -255,22 +323,56 @@ def crop_transparency(image_path):
         bottom = height
         return img.crop((left, top, right, bottom))
 
-def remove_background(file_path, api_key):
-    url = 'https://clipdrop-api.co/remove-background/v1'
-    with open(file_path, 'rb') as image_file:
-        files = {'image_file': (file_path, image_file, 'image/jpeg')}
-        headers = {'x-api-key': api_key}
+# def remove_background(file_path, api_key):
+#     url = 'https://clipdrop-api.co/remove-background/v1'
+#     with open(file_path, 'rb') as image_file:
+#         files = {'image_file': (file_path, image_file, 'image/jpeg')}
+#         headers = {'x-api-key': api_key}
 
-        response = requests.post(url, files=files, headers=headers)
-        if response.ok:
-            with open(file_path, 'wb') as out_file:
-                out_file.write(response.content)
-            print(f"Background removed and image saved back as '{file_path}'")
-        else:
-            print(f"Error: {response.json()['error']}")
+#         response = requests.post(url, files=files, headers=headers)
+#         if response.ok:
+#             with open(file_path, 'wb') as out_file:
+#                 out_file.write(response.content)
+#             print(f"Background removed and image saved back as '{file_path}'")
+#         else:
+#             print(f"Error: {response.json()['error']}")
+def remove_background(file_path):
+    # Get the public URL of the image
+    image_url = get_public_url(file_path)
+    
+    # Call the API to remove the background
+    result = client.predict(image_url, api_name="/predict")
+
+    # Assuming the result contains the path to the processed image
+    processed_image_path = result[0]
+
+    # Replace the original file with the new file
+    shutil.move(processed_image_path, file_path)
+
+    print(file_path)
+
+    # Optional: Clean up any temporary directories created by Gradio
+    temp_dir = os.path.dirname(processed_image_path)
+    if os.path.exists(temp_dir) and os.path.isdir(temp_dir):
+        shutil.rmtree(temp_dir)
+
+def get_public_url(file_path):
+    """
+    Uploads a file to 0x0.st and returns the URL.
+
+    :param file_path: Path to the file to upload
+    :return: URL of the uploaded file
+    """
+    with open(file_path, 'rb') as f:
+        response = requests.post('https://0x0.st', files={'file': f})
+    
+    if response.status_code == 200:
+        return response.text.strip()
+    else:
+        raise Exception(f"Error uploading file: {response.status_code}")
 
 
-def generate_pipe(prompt, out_dir, position):
+def generate_pipe_common(prompt, out_dir, position):
     image_generation_body = {
         "steps": 40,
         "width": 640,
@@ -280,25 +382,27 @@ def generate_pipe(prompt, out_dir, position):
         "samples": 1,
         "style_preset": "pixel-art",
         "text_prompts": [
-            {"text": f"{prompt}, white clean background", "weight": 1},
+            {"text": f"A tall image of {prompt}, white clean background", "weight": 1},
             {"text": "blurry, bad", "weight": -1}
         ],
     }
 
     # Generate image
     generated_data = ttmgenerate_image(image_generation_body)
+    image_path = f'{out_dir}/{position}pipe.png'
+    static_image_path = f'./static/{position}pipe.png'
     for i, image in enumerate(generated_data["artifacts"]):
-        image_path = f'{out_dir}/toppipe.png'
         with open(image_path, "wb") as f:
             f.write(base64.b64decode(image["base64"]))
-    
+        with open(static_image_path, "wb") as f:
+            f.write(base64.b64decode(image["base64"]))
+
+    return image_path
+
+def crop_rotate_resize_save(image_path, position, out_dir):
     # Crop the image to remove transparent space
     cropped_img = crop_transparency(image_path)
     cropped_img.save(image_path)
-    if position == "top":
-        cropped_img.save("./static/toppipe.png")
-    else:
-        cropped_img.save("./static/botpipe.png")
 
     # Check position and rotate if needed
     if position == "top":
@@ -307,21 +411,17 @@ def generate_pipe(prompt, out_dir, position):
             rotated_img.save(image_path)
 
     # Assuming remove_background and resize_image are defined elsewhere
-    remove_background(image_path, CLIPDROP_API_KEY)
+    remove_background(image_path)
     resized_img = resize_image(image_path, (82, 450))
-    save_image(resized_img, image_path)
+    save_image(resized_img, f'{out_dir}/{position}pipe.png')
 
-    if position == "top":
-        remove_background(image_path, CLIPDROP_API_KEY)
-        resized_img = resize_image(image_path, (82, 450))
-        save_image(resized_img, f'{out_dir}/toppipe.png')
-        # save_image(resized_img, './static/toppipe.png')
-    else:
-        remove_background(image_path, CLIPDROP_API_KEY)
-        resized_img = resize_image(image_path, (82, 450))
-        save_image(resized_img, f'{out_dir}/botpipe.png')
-        # save_image(resized_img, './static/botpipe.png')
+def generate_top_pipe(prompt, out_dir):
+    image_path = generate_pipe_common(prompt, out_dir, "top")
+    crop_rotate_resize_save(image_path, "top", out_dir)
 
+def generate_bot_pipe(prompt, out_dir):
+    image_path = generate_pipe_common(prompt, out_dir, "bot")
+    crop_rotate_resize_save(image_path, "bot", out_dir)
 def generate_bird(prompt, out_dir):
     # Generate bird
     image_generation_body = {
@@ -334,7 +434,7 @@ def generate_bird(prompt, out_dir):
         "style_preset": "pixel-art",
         "text_prompts": [
             {
-            "text": f"{prompt}, white clean background",
+            "text": f"A full image of {prompt}, white clean background",
             "weight": 1
             },
             {
@@ -363,7 +463,7 @@ def generate_bird(prompt, out_dir):
         with open(static_bird_path, "wb") as f:
             f.write(decoded_image)
 
-    remove_background(bird_path, CLIPDROP_API_KEY)
+    remove_background(bird_path)
     resized_img = resize_image(bird_path, (40, 62))
     save_image(resized_img, bird_path)
     # save_image(resized_img,"./static/v2.png")
@@ -423,6 +523,59 @@ def deploy_site(zip_path):
     with open(zip_path, 'rb') as zipf:
         response = requests.post(DEPLOY_URL, headers=headers, data=zipf)
     return response.json()
+
+def send_email(recipient, game_url):
+    # The subject line for the email.
+    subject = "Game URL"
+
+    # The email body for recipients with non-HTML email clients.
+    body_text = f"Here is your game URL: {game_url}"
+
+    # The HTML body of the email.
+    body_html = f"""<html>
+    <head></head>
+    <body>
+      <h1>Game URL</h1>
+      <p>Here is your game URL: <a href="{game_url}">{game_url}</a></p>
+    </body>
+    </html>"""
+
+    # The character encoding for the email.
+    charset = "UTF-8"
+
+    # Create a new SES resource and specify a region.
+    client = boto3.client('ses', region_name=AWS_REGION)
+
+    # Try to send the email.
+    try:
+        # Provide the contents of the email.
+        response = client.send_email(
+            Destination={
+                'ToAddresses': [recipient],
+            },
+            Message={
+                'Body': {
+                    'Html': {
+                        'Charset': charset,
+                        'Data': body_html,
+                    },
+                    'Text': {
+                        'Charset': charset,
+                        'Data': body_text,
+                    },
+                },
+                'Subject': {
+                    'Charset': charset,
+                    'Data': subject,
+                },
+            },
+            Source=SENDER_EMAIL,
+        )
+    except ClientError as e:
+        print(e.response['Error']['Message'])
+    else:
+        print("Email sent! Message ID:"),
+        print(response['MessageId'])
 
 if __name__ == '__main__':
     app.run(debug=True)
