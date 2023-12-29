@@ -16,7 +16,7 @@ STABILITY_API_KEY = config.get('stability_api_key')
 CLIPDROP_API_KEY = config.get('clipdrop_api_key')
 OPENAI_API_KEY = config.get('openai_api_key')
 NETLIFY_ACCESS_TOKEN = config.get('netlify_access_token')
-DB_BASE_URL='https://chao-game-backend.onrender.com/api/v1' 
+DB_BASE_URL='https://rimor.onrender.com/api/v1' 
 client = boto3.client(
         'ses',
         region_name="eu-north-1",

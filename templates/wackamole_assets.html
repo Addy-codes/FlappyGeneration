@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@500&display=swap" rel="stylesheet">
+    <style>
+        body {
+            background-color: white;
+            font-family: 'Montserrat', sans-serif;
+            color: black;
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+
+            /* overflow: hidden; */
+        }
+
+        .asset {
+            width: 100%;
+
+            display: flex;
+            justify-content: space-around;
+            /* gap: 10vh; */
+        }
+
+
+        .allasset {
+            width: 50%;
+            margin: 5vh 23vh;
+            /* border: 2px solid blue; */
+
+        }
+
+        .generateBtn {
+            width: 50%;
+            margin: 5vh 23vh;
+            /* border: 2px solid red; */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .generateBtn button {
+            width: 100%;
+            height: 10vh;
+            font-size: 17px;
+            background-color: #2014AC;
+            border-radius: 5px;
+            color: white;
+            font-weight: 700;
+        }
+
+        .generateBtn button:hover {
+
+            background-color: #4233ef;
+
+        }
+
+        .element-container {
+            display: flex;
+            flex-direction: column;
+            margin-bottom: 2vh;
+            /* border: 2px solid yellow; */
+            width: 123%;
+            padding: 10px;
+
+        }
+
+        .heading-container {
+            margin-bottom: 1vh;
+        }
+
+        .image-container {
+            position: relative;
+            overflow: hidden;
+            border-radius: 2vh;
+            width: 65%;
+            /* Square shape with fixed height */
+            height: 50vh;
+            margin-bottom: 1vh;
+            background-color: wheat;
+        }
+
+        .image-container img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .button-container {
+            display: flex;
+            justify-content: flex-end;
+            margin-bottom: 29vh;
+            margin-top: -28vh;
+        }
+
+        .button-container button {
+            background-color: #21A782;
+            height: 7vh;
+            width: 24%;
+            color: white;
+            font-size: 17px;
+            font-weight: 700;
+            border-radius: 14px;
+            border: none;
+        }
+
+        .regenerate-button {
+            height: 7vh;
+            padding: 1vh;
+            color: #fff;
+            border: none;
+            border-radius: 1vh;
+            cursor: pointer;
+
+            width: 30%;
+            font-size: 17px;
+            background-color: #21AB7A;
+            font-weight: 700;
+        }
+
+        .regenerate-button:hover {
+            background-color: #22e4a0;
+        }
+
+        @media screen and (max-width: 1100px) {
+            .asset {
+                flex-direction: column;
+            }
+
+            .allasset {
+                margin-left: 17%;
+            }
+
+            .image-container {
+                width: 100%;
+                height: 30vh;
+            }
+
+            .button-container {
+                margin-top: 1vh;
+                margin-bottom: 1vh;
+                /* margin-right: 15vh; */
+                /* width: 86%; */
+                justify-content: center;
+            }
+
+            .button-container button {
+                height: 4vh;
+                width: 33%;
+            }
+
+            h2 {
+                display: flex;
+                justify-content: center;
+                font-size: 22px;
+            }
+
+            .generateBtn {
+                width: 70%;
+                margin-left: 15%;
+                margin-top: -5%;
+            }
+
+            .generateBtn button {
+                width: 100%;
+                height: 6vh;
+                font-size: 14px;
+            }
+
+        }
+    </style>
+</head>
+
+<body>
+    <div class="asset">
+        <div class="allasset">
+            <!-- Main Character Regeneration Form -->
+            <div class="element-container">
+                <div class="heading-container">
+                    <h2>Mole:</h2>
+                </div>
+                <div class="image-container">
+                    <img src="{{ url_for('static', filename='mole.png') }}" alt="Mole">
+                </div>
+                <form action="/regenerate/mole" method="post">
+                    <div class="button-container">
+                        <button type="submit" name="regenerate" id="regenerate-main-character"
+                            value="main_character">Retry</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Top Obstacle Regeneration Form -->
+            <div class="element-container">
+                <div class="heading-container">
+                    <h2>Hole:</h2>
+                </div>
+                <div class="image-container">
+                    <img src="{{ url_for('static', filename='hole.png') }}" alt="Hole">
+                </div>
+                <form action="/regenerate/hole" method="post">
+                    <div class="button-container">
+                        <button type="submit" name="regenerate" id="regenerate-top-obstacle"
+                            value="top_obstacle">Retry</button>
+                    </div>
+                </form>
+            </div>
+
+            <!-- Bottom Obstacle Regeneration Form -->
+            <!-- <div class="element-container">
+                <div class="heading-container">
+                    <h2>Bottom Obstacle:</h2>
+                </div>
+                <div class="image-container">
+                    <img src="{{ url_for('static', filename='botpipe.png') }}" alt="Bottom Obstacle">
+                </div>
+                <form action="/regenerate/bottom_obstacle" method="post">
+                    <div class="button-container">
+                        <button type="submit" name="regenerate" id="regenerate-bottom-obstacle"
+                            value="bottom_obstacle">Retry</button>
+                    </div>
+                </form>
+            </div> -->
+
+            <!-- Background Regeneration Form -->
+            <div class="element-container">
+                <div class="heading-container">
+                    <h2>Background:</h2>
+                </div>
+                <div class="image-container">
+                    <img src="{{ url_for('static', filename='background.jpg') }}" alt="Background">
+                </div>
+                <form action="/regenerate/wackamolebackground" method="post">
+                    <div class="button-container">
+                        <button type="submit" name="regenerate" id="regenerate-background"
+                            value="background">Retry</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <!-- Game Generation Form -->
+        <div class="generateBtn">
+            <form action="/wackamole_assets" method="POST">
+                <button type="submit" id="generate-game">Generate Game</button>
+            </form>
+        </div>
+    </div>
+</body>
+
+
+
+</html>
