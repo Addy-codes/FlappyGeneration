@@ -69,9 +69,6 @@ def gameTheme():
     if request.method == 'POST':
         if 'generate' in request.form:
             theme = request.form.get('theme')
-            print("Finding choice")
-            game_choice = helper.choice(theme)  # Assume this returns 'flappy' or 'wackamole'
-            print(game_choice)
             # Common code for saving theme to MongoDB
             microservice_url = f"{DB_BASE_URL}/addtheme"
             user = session.get('user_info')
@@ -88,36 +85,44 @@ def gameTheme():
                     print(response)
             except Exception as e:
                 print(f"Error: {e}")
-
-            if game_choice == 'flappy':
-                # Flappy Bird specific processing
-                prompt = f"""
-                    Given the theme '{theme}' for a Flappy Bird game, please provide ideas for the following elements, keep it short:
-                    1. Obstacle 1: This should represent something or someone the main character needs to avoid in the game environment, this obstacle is something that is preferably in the sky and would replace the top pipe.
-                    2. Obstacle 2: Another element in the game that poses a challenge to the main character that is preferably on the ground.
-                    3. Main Character: A representation of the main theme in a creative and thematic way.
-                    4. Background Image: A scene that sets the environment where the action takes place.
+            user_info = session.get('user_info')
+            if user_info['email'] == 'adeeb.rimor@gmail.com':
+                print("Finding choice")
+                game_choice = helper.choice_pipeline(theme)  # Assume this returns 'flappy' or 'wackamole'
+                print(game_choice)
+                if game_choice == 'flappy':
+                    # Flappy Bird specific processing
+                    prompt = f"""
+                        Given the theme '{theme}' for a Flappy Bird game, please provide ideas for the following elements, keep it short:
+                        1. Obstacle 1: This should represent something or someone the main character needs to avoid in the game environment, this obstacle is something that is preferably in the sky and would replace the top pipe.
+                        2. Obstacle 2: Another element in the game that poses a challenge to the main character that is preferably on the ground.
+                        3. Main Character: A representation of the main theme in a creative and thematic way.
+                        4. Background Image: A scene that sets the environment where the action takes place.
+                        """
+                    processed_theme = helper.process_theme(prompt)
+                    parsed_theme = helper.parse_processed_theme_flappy(processed_theme)
+                    session['processed_theme'] = parsed_theme
+                    session['outputId'] = outputId
+                    return render_template('modifyflappytheme.html', processed_theme=parsed_theme)
+                
+                elif game_choice == 'wackamole':
+                    # Whack-a-Mole specific processing
+                    prompt = f"""
+                    Given the theme '{theme}' for a Whack-a-Mole game, please provide creative ideas for the following elements, make sure the elements follow the theme, keep the description short and precise:
+                    1. Mole: A character or element that players will try to catch, find, or 'whack'.
+                    2. Hole: A representation of where this character or element can hide.
+                    3. Background Image: A visually rich scene that encapsulates the essence of '{theme}', providing an immersive backdrop for the game.
                     """
-                processed_theme = helper.process_theme(prompt)
-                parsed_theme = helper.parse_processed_theme_flappy(processed_theme)
-                session['processed_theme'] = parsed_theme
-                session['outputId'] = outputId
-                return render_template('modifyflappytheme.html', processed_theme=parsed_theme)
+                    processed_theme = helper.process_theme(prompt)
+                    parsed_theme = helper.parse_processed_theme_wackamole(processed_theme)
+                    session['processed_theme'] = parsed_theme
+                    session['outputId'] = outputId
+                    return render_template('modifywackamoletheme.html', processed_theme=parsed_theme)
+            else:
+                url = helper.createGame(theme)
+                session['url'] = url
+                return redirect(url_for('final'))
             
-            elif game_choice == 'wackamole':
-                # Whack-a-Mole specific processing
-                prompt = f"""
-                Given the theme '{theme}' for a Whack-a-Mole game, please provide creative ideas for the following elements, make sure the elements follow the theme, keep the description short and precise:
-                1. Mole: A character or element that players will try to catch, find, or 'whack'.
-                2. Hole: A representation of where this character or element can hide.
-                3. Background Image: A visually rich scene that encapsulates the essence of '{theme}', providing an immersive backdrop for the game.
-                """
-                processed_theme = helper.process_theme(prompt)
-                parsed_theme = helper.parse_processed_theme_wackamole(processed_theme)
-                session['processed_theme'] = parsed_theme
-                session['outputId'] = outputId
-                return render_template('modifywackamoletheme.html', processed_theme=parsed_theme)
-
     return render_template('theme.html')
 
 @app.route('/modifyflappytheme', methods=['GET', 'POST'])   
@@ -153,7 +158,6 @@ def modify_wackamole_theme():
         session['mole'] = mole
         session['hole'] = hole
         session['game_background'] = game_background
-        print("ajnajsncsjnvjnadjnvmsjdnfsjnvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv")
         # Here, you could call a helper function to generate assets for the game
         helper.generate_wackamoleassets(mole, hole, game_background)
         # Redirect to a page to showcase or utilize the generated assets

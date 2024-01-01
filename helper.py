@@ -31,7 +31,110 @@ SITE_ID = None  # Leave as None if creating a new site
 # API Endpoints
 DEPLOY_URL = f'https://api.netlify.com/api/v1/sites/{SITE_ID}/deploys' if SITE_ID else 'https://api.netlify.com/api/v1/sites'
 
+def createGame(theme):
+    print("Finding choice")
+    game_choice = choice(theme)
+    print(game_choice)
+
+    if game_choice == 'flappy':
+        # Flappy Bird specific processing
+        prompt = f"""
+            Given the theme '{theme}' for a Flappy Bird game, please provide ideas for the following elements, keep it short:
+            1. Obstacle 1: This should represent something or someone the main character needs to avoid in the game environment, this obstacle is something that is preferably in the sky and would replace the top pipe.
+            2. Obstacle 2: Another element in the game that poses a challenge to the main character that is preferably on the ground.
+            3. Main Character: A representation of the main theme in a creative and thematic way.
+            4. Background Image: A scene that sets the environment where the action takes place.
+            """
+        processed_theme = process_theme(prompt)
+        parsed_theme = parse_processed_theme_flappy(processed_theme)
+        print(parsed_theme)
+        generate_flappyassets(parsed_theme['main_character'], parsed_theme['game_background'], parsed_theme['top_obstacle'], parsed_theme['bottom_obstacle'])
+        folder_path = './CustomFlappy'
+        zip_path = 'website.zip'
+        url = deploy(folder_path, zip_path)
+        return url
+    elif game_choice == 'wackamole':
+        # Whack-a-Mole specific processing
+        prompt = f"""
+        Given the theme '{theme}' for a Whack-a-Mole game, please provide creative ideas for the following elements, make sure the elements follow the theme, keep the description short and precise:
+        1. Mole: A character or element that players will try to catch, find, or 'whack'.
+        2. Hole: A representation of where this character or element can hide.
+        3. Background Image: A visually rich scene that encapsulates the essence of '{theme}', providing an immersive backdrop for the game.
+        """
+        processed_theme = process_theme(prompt)
+        parsed_theme = parse_processed_theme_wackamole(processed_theme)
+        print(parsed_theme)
+        generate_wackamoleassets(parsed_theme.mole, parsed_theme.hole, parsed_theme.game_background)
+        folder_path = './CustomWackAMole'
+        zip_path = 'WackAMole_website.zip'
+        url = deploy(folder_path, zip_path)
+        return url
+
+def deploy(folder_path, zip_path):
+    # Zip the website folder
+    zip_folder(folder_path, zip_path)
+
+    # Deploy the site
+    deploy_response = deploy_site(zip_path)
+    if 'id' in deploy_response:
+        deploy_id = deploy_response['id']
+        url = deploy_response['url']
+        print(url)
+        # Save to MongoDB
+        microservice_url = f"{DB_BASE_URL}/addurl"
+        outputId=session.get('outputId')
+        data = {'url': url, 'output': outputId}
+        headers= {'Content-Type': 'application/json'}
+        try:
+            response = requests.put(microservice_url, json=data , headers=headers)
+            if response.status_code == 200:
+                print('Successfully Added In Db')
+            else:
+                print('Error While Adding In Db')
+        except Exception as e:
+            # Handle exceptions such as network errors
+            print(f"Error: {e}")
+        print(f"Deploy initiated. Deploy ID: {deploy_id}")
+
+    else:
+        print("Error in deployment:", deploy_response)
+        return "Error in deployment"
+    return url
+
 def choice(theme):
+    openai.api_key = OPENAI_API_KEY
+    # Elaborate the prompt
+    prompt = (
+        f"I am planning a game based on the theme '{theme}'. I need to decide whether to create a game similar to Flappy Bird, "
+        f"where the player controls a bird navigating through gaps between vertical obstacles, or a game similar to Whack-a-Mole, "
+        f"where the player hits objects popping out from holes. Based on the theme '{theme}', which game would be more appropriate: Flappy Bird or Whack-a-Mole?"
+    )
+
+    try:
+        # Send the prompt to OpenAI's GPT-4 model
+        response = openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=prompt,
+            max_tokens=50  # Adjust max_tokens based on expected response length
+        )
+
+        # Parse the response
+        decision = response.choices[0].text.strip()
+        print(decision)
+        if "Flappy Bird" in decision:
+            return "flappy"
+        elif "Whack-a-Mole" in decision:
+            return "wackamole"
+        else:
+            # In case the response is ambiguous or does not clearly mention either game
+            return "undecided"
+
+    except Exception as e:
+        # Handle exceptions
+        print(f"Error in connecting to OpenAI API: {e}")
+        return None
+
+def choice_pipeline(theme):
     openai.api_key = OPENAI_API_KEY
     # Elaborate the prompt
     prompt = (
