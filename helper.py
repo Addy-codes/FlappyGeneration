@@ -31,6 +31,39 @@ SITE_ID = None  # Leave as None if creating a new site
 # API Endpoints
 DEPLOY_URL = f'https://api.netlify.com/api/v1/sites/{SITE_ID}/deploys' if SITE_ID else 'https://api.netlify.com/api/v1/sites'
 
+def choice(theme):
+    openai.api_key = OPENAI_API_KEY
+    # Elaborate the prompt
+    prompt = (
+        f"I am planning a game based on the theme '{theme}'. I need to decide whether to create a game similar to Flappy Bird, "
+        f"where the player controls a bird navigating through gaps between vertical obstacles, or a game similar to Whack-a-Mole, "
+        f"where the player hits objects popping out from holes. Based on the theme '{theme}', which game would be more appropriate: Flappy Bird or Whack-a-Mole?"
+    )
+
+    try:
+        # Send the prompt to OpenAI's GPT-4 model
+        response = openai.Completion.create(
+            engine="text-davinci-003",
+            prompt=prompt,
+            max_tokens=50  # Adjust max_tokens based on expected response length
+        )
+
+        # Parse the response
+        decision = response.choices[0].text.strip()
+        print(decision)
+        if "Flappy Bird" in decision:
+            return "flappy"
+        elif "Whack-a-Mole" in decision:
+            return "wackamole"
+        else:
+            # In case the response is ambiguous or does not clearly mention either game
+            return "undecided"
+
+    except Exception as e:
+        # Handle exceptions
+        print(f"Error in connecting to OpenAI API: {e}")
+        return None
+
 def process_theme(prompt):
     openai.api_key = OPENAI_API_KEY
 
@@ -82,6 +115,7 @@ def generate_flappyassets(main_character, background_image, obstacle1, obstacle2
     generate_top_pipe(obstacle2, out_dir)
     print("Generating main character")
     generate_bird(main_character, f'{out_dir}/bird/v2.png', 'static/v2.png', (40, 62))
+    remove_background(f"{out_dir}/bird/v2.png")
     print("Generating BG")
     generate_background(background_image, out_dir)
 

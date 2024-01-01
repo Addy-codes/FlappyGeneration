@@ -53,59 +53,70 @@ def login():
         except Exception as e:
             # Handle exceptions such as network errors
             print(f"Error: {e}")
-        
 
         print(userId)
 
         # Save user info in session
         session['user_info'] = {'name': name, 'email': email, 'phone': phone ,'userId': userId}
-        
-        return redirect(url_for('wackamole_theme'))
+        print("Going to game theme")
+        return redirect(url_for('gameTheme'))
 
     return render_template('login.html')
 
-@app.route('/flappytheme', methods=['GET', 'POST']) 
-def flappy_theme():
+@app.route('/gameTheme', methods=['GET', 'POST'])
+def gameTheme():
+    print("In game theme")
     if request.method == 'POST':
         if 'generate' in request.form:
             theme = request.form.get('theme')
-            
-            # Save to MongoDB
+            print("Finding choice")
+            game_choice = helper.choice(theme)  # Assume this returns 'flappy' or 'wackamole'
+            print(game_choice)
+            # Common code for saving theme to MongoDB
             microservice_url = f"{DB_BASE_URL}/addtheme"
-            user=session.get('user_info')
-            print(user['userId'])
+            user = session.get('user_info')
             data = {'theme': theme, 'user': user['userId']}
-            headers= {'Content-Type': 'application/json'}
-            outputId=None
+            headers = {'Content-Type': 'application/json'}
+            outputId = None
             try:
-                response = requests.post(microservice_url, json=data , headers=headers)
+                response = requests.post(microservice_url, json=data, headers=headers)
                 if response.status_code == 200:
                     print('Successfully Added In Db')
-                    outputId=response.json().get('outputId')
-                    print(outputId)
+                    outputId = response.json().get('outputId')
                 else:
                     print('Error While Adding In Db')
                     print(response)
             except Exception as e:
-                # Handle exceptions such as network errors
                 print(f"Error: {e}")
 
-            prompt = f"""
+            if game_choice == 'flappy':
+                # Flappy Bird specific processing
+                prompt = f"""
                     Given the theme '{theme}' for a Flappy Bird game, please provide ideas for the following elements, keep it short:
                     1. Obstacle 1: This should represent something or someone the main character needs to avoid in the game environment, this obstacle is something that is preferably in the sky and would replace the top pipe.
                     2. Obstacle 2: Another element in the game that poses a challenge to the main character that is preferably on the ground.
                     3. Main Character: A representation of the main theme in a creative and thematic way.
                     4. Background Image: A scene that sets the environment where the action takes place.
                     """
-            # Process the theme here
-            processed_theme = helper.process_theme(prompt)
-
-            # Parse and save processed theme in session
-            parsed_theme = helper.parse_processed_theme_flappy(processed_theme)
-            session['processed_theme'] = parsed_theme
-            session['outputId']=outputId
-
-            return render_template('modifyflappytheme.html', processed_theme=parsed_theme)
+                processed_theme = helper.process_theme(prompt)
+                parsed_theme = helper.parse_processed_theme_flappy(processed_theme)
+                session['processed_theme'] = parsed_theme
+                session['outputId'] = outputId
+                return render_template('modifyflappytheme.html', processed_theme=parsed_theme)
+            
+            elif game_choice == 'wackamole':
+                # Whack-a-Mole specific processing
+                prompt = f"""
+                Given the theme '{theme}' for a Whack-a-Mole game, please provide creative ideas for the following elements, make sure the elements follow the theme, keep the description short and precise:
+                1. Mole: A character or element that players will try to catch, find, or 'whack'.
+                2. Hole: A representation of where this character or element can hide.
+                3. Background Image: A visually rich scene that encapsulates the essence of '{theme}', providing an immersive backdrop for the game.
+                """
+                processed_theme = helper.process_theme(prompt)
+                parsed_theme = helper.parse_processed_theme_wackamole(processed_theme)
+                session['processed_theme'] = parsed_theme
+                session['outputId'] = outputId
+                return render_template('modifywackamoletheme.html', processed_theme=parsed_theme)
 
     return render_template('theme.html')
 
@@ -130,48 +141,6 @@ def modify_flappy_theme():
     # Retrieve parsed processed theme from session
     processed_theme = session.get('processed_theme', {})
     return render_template('modifyflappytheme.html', processed_theme=processed_theme)
-
-@app.route('/wackamoletheme', methods=['GET', 'POST'])
-def wackamole_theme():
-    if request.method == 'POST':
-        if 'generate' in request.form:
-            theme = request.form.get('theme')
-            print(theme)
-            print("----------------------------------")
-            # Save to MongoDB
-            microservice_url = f"{DB_BASE_URL}/addtheme"
-            user = session.get('user_info')
-            data = {'theme': theme, 'user': user['userId']}
-            headers = {'Content-Type': 'application/json'}
-            outputId = None
-            try:
-                response = requests.post(microservice_url, json=data, headers=headers)
-                if response.status_code == 200:
-                    print('Successfully Added In Db')
-                    outputId = response.json().get('outputId')
-                else:
-                    print('Error While Adding In Db')
-                    print(response)
-            except Exception as e:
-                print(f"Error: {e}")
-
-            prompt = f"""
-            Given the theme '{theme}' for a Whack-a-Mole game, please provide creative ideas for the following elements, make sure the elements follow the theme, keep the description short and precise:
-            1. Mole: A character or element that players will try to catch, find, or 'whack'.
-            2. Hole: A representation of where this character or element can hide.
-            3. Background Image: A visually rich scene that encapsulates the essence of '{theme}', providing an immersive backdrop for the game.
-            """
-            # Process the theme here
-            processed_theme = helper.process_theme(prompt)
-
-            # Parse and save processed theme in session
-            parsed_theme = helper.parse_processed_theme_wackamole(processed_theme)
-            session['processed_theme'] = parsed_theme
-            session['outputId'] = outputId
-
-            return redirect(url_for('modify_wackamole_theme'))
-
-    return render_template('theme.html')
 
 @app.route('/modifywackamoletheme', methods=['GET', 'POST'])   
 def modify_wackamole_theme():
